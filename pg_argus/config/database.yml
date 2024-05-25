@@ -1,0 +1,51 @@
+default_postgres: &default_postgres
+  adapter: postgresql
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  encoding: unicode
+  timeout: 5000
+  host: localhost
+  username: postgres
+  password: postgres
+
+
+default_clickhouse: &default_clickhouse
+  adapter: clickhouse
+  host: localhost
+  port: 8123
+  debug: true
+  password: clickhouse
+
+development:
+  primary:
+    <<: *default_postgres
+    database: db
+    port: 5432
+  clickhouse: 
+    << : *default_clickhouse
+    database: default
+    username: clickhouse
+    port: 8123
+
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  primary:
+    <<: *default_postgres
+    database: db
+    port: 5431
+  clickhouse: 
+    << : *default_clickhouse
+    database: default
+    username: clickhouse
+    port: 8124
+
+production:
+  primary:
+    <<: *default_postgres
+    database: postgres
+  clickhouse: 
+    << : *default_clickhouse
+    database: default
+    username: clickhouse

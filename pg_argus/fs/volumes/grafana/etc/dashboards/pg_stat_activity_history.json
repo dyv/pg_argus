@@ -1,0 +1,1326 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "displayName": "${__field.labels.simplified_query}",
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.85,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Mean",
+            "sortDesc": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "normal",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime )\nGROUP BY simplified_query, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "Session Utilization",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              }
+            },
+            "displayName": "${__field.labels.simplified_query}",
+            "mappings": []
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "displayLabels": [
+            "percent"
+          ],
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "values": [
+              "percent"
+            ]
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": [
+              "mean"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime )\nGROUP BY simplified_query, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "Session Utilization",
+        "type": "piechart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "displayName": "${__field.labels.simplified_query}",
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "id": 4,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.85,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Mean",
+            "sortDesc": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "normal",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime AND wait_event_type IS NULL)\nGROUP BY simplified_query, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "CPU Utilization",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              }
+            },
+            "displayName": "${__field.labels.simplified_query}",
+            "mappings": []
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "id": 5,
+        "options": {
+          "displayLabels": [
+            "percent"
+          ],
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "values": [
+              "percent"
+            ]
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": [
+              "mean"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime AND wait_event_type IS NULL )\nGROUP BY simplified_query, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "CPU Utilization",
+        "type": "piechart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "id": 6,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.85,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Mean",
+            "sortDesc": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "normal",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime AND date_diff('milliseconds', timestamp, xact_start) > 5)\nGROUP BY simplified_query, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "Long Transactions (5ms)",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              }
+            },
+            "displayName": "${__field.labels.simplified_query}",
+            "mappings": []
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "id": 7,
+        "options": {
+          "displayLabels": [
+            "percent"
+          ],
+          "legend": {
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "values": [
+              "percent"
+            ]
+          },
+          "pieType": "pie",
+          "reduceOptions": {
+            "calcs": [
+              "mean"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime AND date_diff('milliseconds', timestamp, xact_start) > 5)\nGROUP BY simplified_query, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "Long Running Transactions",
+        "type": "piechart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "id": 3,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.85,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [
+              "mean",
+              "max"
+            ],
+            "displayMode": "table",
+            "placement": "bottom",
+            "showLegend": true,
+            "sortBy": "Mean",
+            "sortDesc": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "normal",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "10.4.3",
+        "targets": [
+          {
+            "builderOptions": {
+              "aggregates": [
+                {
+                  "aggregateType": "count",
+                  "alias": "count",
+                  "column": "*"
+                }
+              ],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime64(3)"
+                }
+              ],
+              "database": "default",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [
+                "normalized_query"
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "trend",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                },
+                {
+                  "dir": "ASC",
+                  "name": "normalized_query"
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "pg_stat_activity_history"
+            },
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "PDEE91DDB90597936"
+            },
+            "editorType": "sql",
+            "format": 0,
+            "meta": {
+              "builderOptions": {
+                "aggregates": [
+                  {
+                    "aggregateType": "count",
+                    "alias": "count",
+                    "column": "*"
+                  }
+                ],
+                "columns": [
+                  {
+                    "hint": "time",
+                    "name": "timestamp",
+                    "type": "DateTime64(3)"
+                  }
+                ],
+                "database": "default",
+                "filters": [
+                  {
+                    "condition": "AND",
+                    "filterType": "custom",
+                    "hint": "time",
+                    "key": "",
+                    "operator": "WITH IN DASHBOARD TIME RANGE",
+                    "type": "datetime"
+                  }
+                ],
+                "groupBy": [
+                  "normalized_query"
+                ],
+                "limit": 1000,
+                "meta": {},
+                "mode": "trend",
+                "orderBy": [
+                  {
+                    "default": true,
+                    "dir": "ASC",
+                    "hint": "time",
+                    "name": ""
+                  },
+                  {
+                    "dir": "ASC",
+                    "name": "normalized_query"
+                  }
+                ],
+                "queryType": "timeseries",
+                "table": "pg_stat_activity_history"
+              }
+            },
+            "pluginVersion": "4.0.8",
+            "queryType": "timeseries",
+            "rawSql": "SELECT $__timeInterval(timestamp) as time, simplified_query, locktype, count(*) as total\nFROM \"default\".\"pg_stat_activity_history\"\nWHERE ( time >= $__fromTime AND time <= $__toTime  AND locktype IS NOT null )\nGROUP BY simplified_query, locktype, time ORDER BY time ASC, simplified_query ASC LIMIT 1000",
+            "refId": "A"
+          }
+        ],
+        "title": "WIP: Locks",
+        "type": "barchart"
+      }
+    ],
+    "schemaVersion": 39,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "PgStatActivityHistory",
+    "uid": "bdng2gabb6pz4f",
+    "version": 15,
+    "weekStart": ""
+  }
