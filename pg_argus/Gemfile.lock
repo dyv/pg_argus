@@ -111,6 +111,7 @@ GEM
     debug_inspector (1.2.0)
     diff-lcs (1.5.1)
     drb (2.2.1)
+    dry-cli (1.0.0)
     duckdb (0.10.3.0)
       bigdecimal (>= 3.1.4)
     erubi (1.12.0)
@@ -179,11 +180,6 @@ GEM
     matrix (0.4.2)
     mini_mime (1.1.5)
     minitest (5.23.1)
-    mission_control-jobs (0.2.1)
-      importmap-rails
-      rails (~> 7.1)
-      stimulus-rails
-      turbo-rails
     msgpack (1.7.2)
     mutex_m (0.2.0)
     net-http (0.4.1)
@@ -221,6 +217,8 @@ GEM
     raabro (1.4.0)
     racc (1.8.0)
     rack (3.0.11)
+    rack-proxy (0.7.7)
+      rack
     rack-session (2.0.0)
       rack (>= 3.0.0)
     rack-test (2.1.0)
@@ -296,12 +294,6 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    solid_queue (0.3.1)
-      activejob (>= 7.1)
-      activerecord (>= 7.1)
-      concurrent-ruby (~> 1.2.2)
-      fugit (~> 1.10.1)
-      railties (>= 7.1)
     sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
       rack (>= 2.2.4, < 4)
@@ -340,6 +332,13 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uri (0.13.0)
+    vite_rails (3.0.17)
+      railties (>= 5.1, < 8)
+      vite_ruby (~> 3.0, >= 3.2.2)
+    vite_ruby (3.5.0)
+      dry-cli (>= 0.7, < 2)
+      rack-proxy (~> 0.6, >= 0.6.1)
+      zeitwerk (~> 2.2)
     web-console (4.2.1)
       actionview (>= 6.0.0)
       activemodel (>= 6.0.0)
@@ -374,7 +373,6 @@ DEPENDENCIES
   hotwire-livereload (~> 1.4)
   importmap-rails
   jbuilder
-  mission_control-jobs
   net-http (~> 0.4.1)
   pg (~> 1.5)
   pg_query (~> 5.1.0)
@@ -383,13 +381,13 @@ DEPENDENCIES
   redis (>= 4.0.1)
   rspec-rails (~> 6.1.0)
   selenium-webdriver
-  solid_queue
   sprockets-rails
   sqlite3 (~> 1.4)
   stimulus-rails
   tailwindcss-rails (~> 2.6)
   turbo-rails
   tzinfo-data
+  vite_rails
   web-console
 
 RUBY VERSION

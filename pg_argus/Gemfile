@@ -84,3 +84,5 @@ gem 'clickhouse-activerecord', '~> 1.0.9'
 gem 'net-http', '~> 0.4.1'
 
 gem "good_job", "~> 3.29"
+
+gem 'vite_rails'
