@@ -8,6 +8,22 @@ class PgMonitorJob < ApplicationJob
     key: -> { "#{self.class.name}-#{arguments}}" }
   )
 
+  def every_second(&block)
+    seconds = 1
+    last_tick = Time.current
+    loop do
+      break if GoodJob.current_thread_shutting_down?
+      now = Time.current
+      if now - last_tick >= seconds
+          last_tick = now
+        yield
+      end
+      wait = last_tick + seconds - Time.current
+      puts "sleeping: #{wait}"
+      sleep(wait)
+    end
+  end
+
   def perform(*args)
     puts "PgMonitorJob.perform"
     # Queue up the next attemp
@@ -17,14 +33,14 @@ class PgMonitorJob < ApplicationJob
       dsn = "host=localhost port=5432 dbname=postgres user=postgres password=postgres"
       pgconn = PG.connect(dsn)
       begin
-        (1..10).each do |_i|
+        every_second do
+          puts "collecting: #{Time.current}"
           start = Time.current
           PgStatActivityHistory.bulk_load!(Time.current, pgconn)
           puts "bulk_load took #{(Time.current - start).in_milliseconds} milliseconds"
         end
       ensure
         pgconn.close
-        sleep(5)
       end
     rescue StandardError => e
       puts "error: #{e.class} #{e.message}"
@@ -33,7 +49,6 @@ class PgMonitorJob < ApplicationJob
       end
       raise e
     ensure
-      sleep(1)
       puts "re-enqueueing PgMonitorJob"
       PgMonitorJob.perform_later
     end
