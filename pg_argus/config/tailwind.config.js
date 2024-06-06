@@ -4,7 +4,7 @@ module.exports = {
   content: [
     "./public/*.html",
     "./app/helpers/**/*.rb",
-    "./app/frontend/**/*.js",
+    "./app/frontend/**/*.{js,jsx}",
     "./app/views/**/*.{erb,haml,html,slim}",
   ],
   theme: {
@@ -18,5 +18,6 @@ module.exports = {
     require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),
     require("@tailwindcss/container-queries"),
+    require("daisyui"),
   ],
 };

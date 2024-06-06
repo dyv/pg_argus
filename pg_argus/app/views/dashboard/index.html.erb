@@ -6,15 +6,15 @@
 <div class="grid grid-cols-2 gap-4 grid-flow-row-dense">
   <div data-controller="line-chart" data-line-chart-url-value="/dashboard/query_1" class="max-w-100% p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
     <div>
-      <canvas data-line-chart-target="graph" class="h-64">
+      <canvas id="graph-1" data-line-chart-target="graph" class="h-64" style="width:100%">
     </div>
-    <div id="legend-1" data-line-chart-target="legend"></div>
+    <div id="legend-1" data-line-chart-target="legend" data-line-chart-all-visible-value=true class="overflow-x-auto h-48"></div>
   </div>
   <div data-controller="line-chart" data-line-chart-url-value="/dashboard/query_1" class="max-w-100% p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
     <div>
-      <canvas data-line-chart-target="graph" class="h-64">
+      <canvas id="graph-2" data-line-chart-target="graph" class="h-64" style="width:100%">
     </div>
-    <div id="legend-2" data-line-chart-target="legend" data-line-chart-all-visible-value=true=></div>
+    <div id="legend-2" data-line-chart-target="legend" data-line-chart-all-visible-value=true class="overflow-x-auto h-48" ></div>
   </div>
 <div>
 <!--

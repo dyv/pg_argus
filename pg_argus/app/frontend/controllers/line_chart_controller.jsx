@@ -21,6 +21,8 @@ export default class extends Controller {
     this.chart.destroy();
     this.chart = undefined;
     this.stopRefreshing();
+    // destroy legend and associated callbacks
+    this.legendTarget.innerHTML = "";
   }
 
   startRefreshing() {
@@ -63,7 +65,7 @@ export default class extends Controller {
 
           this.chart.update("none");
         }, true);
-    }, 4000);
+    }, 10000);
   }
 
   stopRefreshing() {
@@ -77,6 +79,9 @@ export default class extends Controller {
       dataset.order = 100;
     });
   }
+
+  lineWidth = 1;
+  pointSize = 2;
 
   load() {
     console.log(
@@ -113,9 +118,9 @@ export default class extends Controller {
               intersect: false,
             },
             fill: false,
-            pointRadius: 1,
-            pointHoverRadius: 2,
-            borderWidth: 1.5,
+            pointRadius: this.pointSize,
+            pointHoverRadius: this.pointSize + 2,
+            borderWidth: this.lineWidth,
             scales: {
               y: {
                 beginAtZero: true,
@@ -161,7 +166,6 @@ export default class extends Controller {
                   onZoomComplete: ({ chart }) => {
                     const from = chart.options.scales.x.min;
                     const until = chart.options.scales.x.max;
-                    console.log("Zoomed from", from, "to", until);
                     // If from and until already match query parameters don't update the query params
                     if (
                       new URLSearchParams(window.location.search).get(
@@ -192,7 +196,6 @@ export default class extends Controller {
             if (this.chart === undefined) {
               return;
             }
-            console.log("Zooming to", e.detail.from, e.detail.until);
             this.chart.zoomScale(
               "x",
               { min: e.detail.from, max: e.detail.until },
@@ -204,19 +207,15 @@ export default class extends Controller {
       });
   }
   getOrCreateLegendList() {
-    let listContainer = this.legendTarget.querySelector("ul");
+    let listContainer = this.legendTarget.querySelector("table");
+    if (listContainer) {
+      listContainer.remove();
+    }
+    listContainer = this.legendTarget.querySelector("table");
 
     if (!listContainer) {
       listContainer = (
-        <ul
-          class="m-0 p-0"
-          style={{
-            height: "8rem",
-            overflow: "scroll",
-            overflowX: "scroll",
-            width: "100%",
-          }}
-        ></ul>
+        <table class="m-0 p-0 table-fixed table table-xs table-pin-rows table-pin-cols"></table>
       );
       this.legendTarget.appendChild(listContainer);
     }
@@ -224,18 +223,31 @@ export default class extends Controller {
     return listContainer;
   }
   getHTMLLegendPlugin() {
+    var previousData = undefined;
     return {
       id: "htmlLegend",
       afterUpdate: function (chart, args, options) {
-        if (args.mode === "none") {
+        if (chart.data.datasets == previousData) {
           return;
         }
+        previousData = chart.data.datasets;
         const ul = this.getOrCreateLegendList();
 
         // Remove old legend items
         while (ul.firstChild) {
           ul.firstChild.remove();
         }
+
+        ul.appendChild(
+          <thead style={{ display: "table-header-group", position: "sticky" }}>
+            <tr>
+              <th class="w-6"></th>
+              <th class="w-16">Total</th>
+              <th>Label</th>
+            </tr>
+          </thead>
+        );
+        let tbody = <tbody />;
         // Reuse the built-in legendItems generator
         const items = chart.options.plugins.legend.labels.generateLabels(chart);
         // Sort items based on associated dataseries totals
@@ -263,104 +275,98 @@ export default class extends Controller {
         items.forEach((item, i) => {
           let divId = this.graphTarget.id + "-lgnd-item-div-" + i;
           let itemId = this.graphTarget.id + "-lgnd-item-text-" + i;
-          console.log(
-            "creating item with color: ",
-            item.fillStyle,
-            item.strokeStyle
-          );
           const li = (
-            <li
-              class="items-center cursor-pointer ml-3.5 whitespace-nowrap"
-              style={{ lineHeight: "0.875rem" }}
-            >
-              <div id={divId} style={{ whiteSpace: "nowrap" }}>
+            <tr class="items-center cursor-pointer ml-3.5 text-sm">
+              <td>
                 <span
-                  class="inline-block flex-shrink-0 h-3.5 mr-3.5 w-3.5"
+                  class="inline-block flex-shrink-0 h-3 w-3 mr-1"
                   style={{
                     background: item.fillStyle,
                     borderColor: item.strokeStyle,
-                    borderWidth: item.lineWidth + 2 + "px",
                   }}
                 />
-                <p
-                  id={itemId}
-                  class="m-0 p-0"
-                  style={{
-                    color: item.fontColor,
-                    textDecoration: item.hidden ? "line-through" : "",
-                    display: "inline",
-                    fontSize: "0.75rem",
-                    lineHeight: "0.875rem",
-                  }}
-                >
-                  [{totals[item.text]}] {item.text}
-                </p>
-              </div>
-            </li>
+              </td>
+              <td>{totals[item.text]}</td>
+              <td
+                id={itemId}
+                class="m-0 p-0"
+                style={{
+                  color: item.fontColor,
+                  textDecoration: item.hidden ? "line-through" : "",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.text}
+              </td>
+            </tr>
           );
           var timer;
           var isDoubleClick = false;
-          li.addEventListener("click", (e) => {
+          var toggleSeries = function (e) {
+            if (isDoubleClick) {
+              return;
+            }
+            chart.setDatasetVisibility(
+              item.datasetIndex,
+              !chart.isDatasetVisible(item.datasetIndex)
+            );
+            chart.update("none");
+          };
+          var focusSeries = function (e) {
+            console.log("focus series");
+            const { type } = chart.config;
+            // Turn off visibility of all other elements
+            chart.data.datasets.forEach((e, i) => {
+              if (i !== item.datasetIndex) {
+                chart.setDatasetVisibility(i, this.allVisibleValue);
+              }
+            });
+            chart.setDatasetVisibility(item.datasetIndex, true);
+            this.allVisibleValue = !this.allVisibleValue;
+            chart.update("none");
+          }.bind(this);
+
+          li.addEventListener("mousedown", (e) => {
             // Don't do anything if it is a double click event.
             isDoubleClick = false;
             timer = setTimeout(() => {
-              if (isDoubleClick) {
-                return;
-              }
-              const { type } = chart.config;
-              if (type === "pie" || type === "doughnut") {
-                // Pie and doughnut charts only have a single dataset and visibility is per item
-                chart.toggleDataVisibility(item.index);
+              if (e.shiftKey) {
+                e.preventDefault();
+                focusSeries(e);
               } else {
-                chart.setDatasetVisibility(
-                  item.datasetIndex,
-                  !chart.isDatasetVisible(item.datasetIndex)
-                );
+                toggleSeries(e);
               }
-              chart.update("none");
             }, 250);
           });
-          li.ondblclick = () => {
+          li.addEventListener("dblclick", (e) => {
             isDoubleClick = true;
             clearTimeout(timer);
-            const { type } = chart.config;
-            if (type === "pie" || type === "doughnut") {
-              // Pie and doughnut charts only have a single dataset and visibility is per item
-              chart.toggleDataVisibility(item.index);
-            } else {
-              // Turn off visibility of all other elements
-              chart.data.datasets.forEach((e, i) => {
-                if (i !== item.datasetIndex) {
-                  chart.setDatasetVisibility(i, this.allVisibleValue);
-                }
-              });
-              chart.setDatasetVisibility(item.datasetIndex, true);
-              this.allVisibleValue = !this.allVisibleValue;
-              chart.update();
-              return;
-            }
-            chart.update();
-          };
+            focusSeries();
+          });
 
           let oldOrder = chart.data.datasets[item.datasetIndex].order;
           // Add an on hover to text container to turn it bold and off when hover ends
-          li.onmouseover = () => {
-            document.getElementById(itemId).style.fontWeight = "bold";
-            document.getElementById(divId).style.whiteSpace = "normal";
+          li.onmouseover = function () {
+            let itemElem = document.getElementById(itemId);
+            itemElem.style.fontWeight = "bold";
+            itemElem.style.whiteSpace = "normal";
             // Make the associated dataset have a larger borderwidth
-            chart.data.datasets[item.datasetIndex].borderWidth = 2.5;
-            chart.data.datasets[item.datasetIndex].order = 1;
-            chart.update("none");
-          };
-          li.onmouseleave = () => {
-            document.getElementById(itemId).style.fontWeight = "normal";
-            document.getElementById(divId).style.whiteSpace = "nowrap";
-            chart.data.datasets[item.datasetIndex].borderWidth = 0.5;
+            this.chart.data.datasets[item.datasetIndex].borderWidth =
+              this.lineWidth + 2;
+            this.chart.data.datasets[item.datasetIndex].order = 1;
+            this.chart.update("none");
+          }.bind(this);
+          li.onmouseleave = function () {
+            let itemElem = document.getElementById(itemId);
+            itemElem.style.fontWeight = "normal";
+            itemElem.style.whiteSpace = "nowrap";
+            chart.data.datasets[item.datasetIndex].borderWidth = this.lineWidth;
             chart.data.datasets[item.datasetIndex].order = oldOrder;
             chart.update("none");
-          };
-          ul.appendChild(li);
+          }.bind(this);
+          tbody.appendChild(li);
         });
+        ul.appendChild(tbody);
       }.bind(this),
     };
   }
@@ -379,6 +385,7 @@ const getOrCreateTooltip = (chart) => {
     tooltipEl.style.position = "absolute";
     tooltipEl.style.transform = "translate(-50%, 0)";
     tooltipEl.style.transition = "all .1s ease";
+    tooltipEl.style.zIndex = 9999;
 
     const table = document.createElement("table");
     table.style.margin = "0px";
