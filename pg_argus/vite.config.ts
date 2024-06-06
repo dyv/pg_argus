@@ -5,6 +5,7 @@ import StimulusHMR from 'vite-plugin-stimulus-hmr';
 
 
 
+
 export default defineConfig({
   clearScreen: false,
   plugins: [
@@ -18,5 +19,5 @@ export default defineConfig({
     rollupOptions: {
       input: "/app/javascript/entrypoints/application.js"
     }
-  }
+  },
 })

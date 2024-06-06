@@ -2,6 +2,9 @@ import { Controller } from "@hotwired/stimulus";
 import Chart from "chart.js/auto";
 import zoomPlugin from "chartjs-plugin-zoom";
 import "chartjs-adapter-luxon";
+import React from "jsx-dom";
+import autocolors from "chartjs-plugin-autocolors";
+
 Chart.register(zoomPlugin);
 
 // Connects to data-controller="line-chart"
@@ -70,7 +73,9 @@ export default class extends Controller {
   }
 
   prepareDatasets(data) {
-    data.results.forEach((dataset, i) => {});
+    data.results.forEach((dataset, i) => {
+      dataset.order = 100;
+    });
   }
 
   load() {
@@ -89,6 +94,9 @@ export default class extends Controller {
         // Create the echarts instance
         let ctx = this.graphTarget;
 
+        const lighten = (color, value) =>
+          Chart.helpers.color(color).lighten(value).rgbString();
+
         this.chart = new Chart(ctx, {
           type: "line",
           data: {
@@ -106,7 +114,8 @@ export default class extends Controller {
             },
             fill: false,
             pointRadius: 1,
-            pointHoverRadius: 5,
+            pointHoverRadius: 2,
+            borderWidth: 1.5,
             scales: {
               y: {
                 beginAtZero: true,
@@ -121,6 +130,15 @@ export default class extends Controller {
             plugins: {
               legend: {
                 display: false,
+              },
+              autocolors: {
+                customize(context) {
+                  const colors = context.colors;
+                  return {
+                    background: lighten(colors.background, 0.5),
+                    border: lighten(colors.border, 0.5),
+                  };
+                },
               },
               htmlLegend: {
                 // ID of the container to put the legend in
@@ -189,10 +207,17 @@ export default class extends Controller {
     let listContainer = this.legendTarget.querySelector("ul");
 
     if (!listContainer) {
-      listContainer = document.createElement("ul");
-      listContainer.style.margin = 0;
-      listContainer.style.padding = 0;
-
+      listContainer = (
+        <ul
+          class="m-0 p-0"
+          style={{
+            height: "8rem",
+            overflow: "scroll",
+            overflowX: "scroll",
+            width: "100%",
+          }}
+        ></ul>
+      );
       this.legendTarget.appendChild(listContainer);
     }
 
@@ -206,10 +231,6 @@ export default class extends Controller {
           return;
         }
         const ul = this.getOrCreateLegendList();
-        ul.style.height = "8rem";
-        ul.style.overflow = "scroll";
-        ul.style.overflowX = "scroll";
-        ul.style.width = "100%";
 
         // Remove old legend items
         while (ul.firstChild) {
@@ -239,13 +260,44 @@ export default class extends Controller {
           return totals[right.text] - totals[left.text];
         });
 
-        items.forEach((item) => {
-          const li = document.createElement("li");
-          li.style.alignItems = "center";
-          li.style.cursor = "pointer";
-          li.style.marginLeft = "0.875rem";
-          li.style.whiteSpace = "nowrap";
-
+        items.forEach((item, i) => {
+          let divId = this.graphTarget.id + "-lgnd-item-div-" + i;
+          let itemId = this.graphTarget.id + "-lgnd-item-text-" + i;
+          console.log(
+            "creating item with color: ",
+            item.fillStyle,
+            item.strokeStyle
+          );
+          const li = (
+            <li
+              class="items-center cursor-pointer ml-3.5 whitespace-nowrap"
+              style={{ lineHeight: "0.875rem" }}
+            >
+              <div id={divId} style={{ whiteSpace: "nowrap" }}>
+                <span
+                  class="inline-block flex-shrink-0 h-3.5 mr-3.5 w-3.5"
+                  style={{
+                    background: item.fillStyle,
+                    borderColor: item.strokeStyle,
+                    borderWidth: item.lineWidth + 2 + "px",
+                  }}
+                />
+                <p
+                  id={itemId}
+                  class="m-0 p-0"
+                  style={{
+                    color: item.fontColor,
+                    textDecoration: item.hidden ? "line-through" : "",
+                    display: "inline",
+                    fontSize: "0.75rem",
+                    lineHeight: "0.875rem",
+                  }}
+                >
+                  [{totals[item.text]}] {item.text}
+                </p>
+              </div>
+            </li>
+          );
           var timer;
           var isDoubleClick = false;
           li.addEventListener("click", (e) => {
@@ -265,7 +317,7 @@ export default class extends Controller {
                   !chart.isDatasetVisible(item.datasetIndex)
                 );
               }
-              chart.update();
+              chart.update("none");
             }, 250);
           });
           li.ondblclick = () => {
@@ -290,53 +342,23 @@ export default class extends Controller {
             chart.update();
           };
 
-          // Color box
-          const boxSpan = document.createElement("span");
-          boxSpan.style.background = item.fillStyle;
-          boxSpan.style.borderColor = item.strokeStyle;
-          boxSpan.style.borderWidth = item.lineWidth + "px";
-          boxSpan.style.display = "inline-block";
-          boxSpan.style.flexShrink = 0;
-          boxSpan.style.height = "0.875rem";
-          boxSpan.style.marginRight = "0.875rem";
-          boxSpan.style.width = "0.875rem";
-
-          // Text
-          const textContainer = document.createElement("p");
-          textContainer.style.color = item.fontColor;
-          textContainer.style.margin = 0;
-          textContainer.style.padding = 0;
-          textContainer.style.textDecoration = item.hidden
-            ? "line-through"
-            : "";
-          textContainer.style.display = "inline";
-          textContainer.style.fontSize = "0.875rem";
-
-          // Make the text contain the item text and the total
-          const text = document.createTextNode(
-            `[${totals[item.text]}] ${item.text}`
-          );
-          textContainer.appendChild(text);
-
+          let oldOrder = chart.data.datasets[item.datasetIndex].order;
           // Add an on hover to text container to turn it bold and off when hover ends
           li.onmouseover = () => {
-            console.log("on mouse over");
-            textContainer.style.fontWeight = "bold";
+            document.getElementById(itemId).style.fontWeight = "bold";
+            document.getElementById(divId).style.whiteSpace = "normal";
             // Make the associated dataset have a larger borderwidth
-            chart.data.datasets[item.datasetIndex].borderWidth = 5;
+            chart.data.datasets[item.datasetIndex].borderWidth = 2.5;
+            chart.data.datasets[item.datasetIndex].order = 1;
             chart.update("none");
           };
           li.onmouseleave = () => {
-            console.log("on mouse out");
-            textContainer.style.fontWeight = "normal";
-            chart.data.datasets[item.datasetIndex].borderWidth = 3;
+            document.getElementById(itemId).style.fontWeight = "normal";
+            document.getElementById(divId).style.whiteSpace = "nowrap";
+            chart.data.datasets[item.datasetIndex].borderWidth = 0.5;
+            chart.data.datasets[item.datasetIndex].order = oldOrder;
             chart.update("none");
           };
-
-          const line = document.createElement("div");
-          line.appendChild(boxSpan);
-          line.appendChild(textContainer);
-          li.appendChild(line);
           ul.appendChild(li);
         });
       }.bind(this),
