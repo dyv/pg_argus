@@ -2,10 +2,39 @@ import { Controller } from "@hotwired/stimulus";
 import Chart from "chart.js/auto";
 import zoomPlugin from "chartjs-plugin-zoom";
 import "chartjs-adapter-luxon";
+import { Interaction } from "chart.js";
+import { getRelativePosition, color } from "chart.js/helpers";
 import React from "jsx-dom";
 import autocolors from "chartjs-plugin-autocolors";
 
 Chart.register(zoomPlugin);
+Interaction.modes.xAxisNearest = function (
+  chart,
+  e,
+  options,
+  useFinalPosition
+) {
+  const position = getRelativePosition(e, chart);
+
+  const items = [];
+  Interaction.evaluateInteractionItems(
+    chart,
+    "x",
+    position,
+    (element, datasetIndex, index) => {
+      if (element.inXRange(position.x, useFinalPosition)) {
+        items.push({ element, datasetIndex, index });
+      }
+    }
+  );
+
+  items.sort((a, b) => {
+    const aY = a.element.getCenterPoint().y;
+    const bY = b.element.getCenterPoint().y;
+    return Math.abs(aY - position.y) - Math.abs(bY - position.y);
+  });
+  return items;
+};
 
 // Connects to data-controller="line-chart"
 export default class extends Controller {
@@ -30,10 +59,6 @@ export default class extends Controller {
       fetch(this.urlValue)
         .then((response) => response.json())
         .then((data) => {
-          if (this.chart === undefined) {
-            return;
-          }
-
           data = JSON.parse(mockData);
           this.prepareDatasets(data);
 
@@ -99,9 +124,6 @@ export default class extends Controller {
         // Create the echarts instance
         let ctx = this.graphTarget;
 
-        const lighten = (color, value) =>
-          Chart.helpers.color(color).lighten(value).rgbString();
-
         this.chart = new Chart(ctx, {
           type: "line",
           data: {
@@ -114,8 +136,7 @@ export default class extends Controller {
             responsive: true,
             maintainAspectRatio: false,
             interaction: {
-              mode: "index",
-              intersect: false,
+              mode: "xAxisNearest",
             },
             fill: false,
             pointRadius: this.pointSize,
@@ -136,15 +157,7 @@ export default class extends Controller {
               legend: {
                 display: false,
               },
-              autocolors: {
-                customize(context) {
-                  const colors = context.colors;
-                  return {
-                    background: lighten(colors.background, 0.5),
-                    border: lighten(colors.border, 0.5),
-                  };
-                },
-              },
+              autocolors: {},
               htmlLegend: {
                 // ID of the container to put the legend in
                 containerID: this.legendTarget.id,
@@ -152,6 +165,9 @@ export default class extends Controller {
               tooltip: {
                 enabled: false,
                 position: "nearest",
+                sort: function (a, b) {
+                  return b.value - a.value;
+                },
                 external: externalTooltipHandler,
               },
               zoom: {
@@ -273,16 +289,18 @@ export default class extends Controller {
         });
 
         items.forEach((item, i) => {
-          let divId = this.graphTarget.id + "-lgnd-item-div-" + i;
           let itemId = this.graphTarget.id + "-lgnd-item-text-" + i;
+          let backgroundColor = color(item.fillStyle).alpha(1).rgbString();
+          let borderColor = color(item.strokeStyle).alpha(1).rgbString();
+          let fontColor = color(item.fontColor).alpha(1).rgbString();
           const li = (
             <tr class="items-center cursor-pointer ml-3.5 text-sm">
               <td>
                 <span
                   class="inline-block flex-shrink-0 h-3 w-3 mr-1"
                   style={{
-                    background: item.fillStyle,
-                    borderColor: item.strokeStyle,
+                    background: backgroundColor,
+                    borderColor: borderColor,
                   }}
                 />
               </td>
@@ -291,7 +309,6 @@ export default class extends Controller {
                 id={itemId}
                 class="m-0 p-0"
                 style={{
-                  color: item.fontColor,
                   textDecoration: item.hidden ? "line-through" : "",
                   whiteSpace: "nowrap",
                 }}
@@ -313,7 +330,6 @@ export default class extends Controller {
             chart.update("none");
           };
           var focusSeries = function (e) {
-            console.log("focus series");
             const { type } = chart.config;
             // Turn off visibility of all other elements
             chart.data.datasets.forEach((e, i) => {
@@ -376,21 +392,12 @@ const getOrCreateTooltip = (chart) => {
   let tooltipEl = chart.canvas.parentNode.querySelector("div");
 
   if (!tooltipEl) {
-    tooltipEl = document.createElement("div");
-    tooltipEl.style.background = "rgba(0, 0, 0, 0.7)";
-    tooltipEl.style.borderRadius = "3px";
-    tooltipEl.style.color = "white";
-    tooltipEl.style.opacity = 1;
-    tooltipEl.style.pointerEvents = "none";
-    tooltipEl.style.position = "absolute";
-    tooltipEl.style.transform = "translate(-50%, 0)";
-    tooltipEl.style.transition = "all .1s ease";
-    tooltipEl.style.zIndex = 9999;
+    tooltipEl = (
+      <div class="dark:bg-slate-950 dark:text-slate-300 bg-slate-50 text-slate-950 rounded-lg absolute pointer-events-none z-50 w-96 max-h-60 overflow-hidden">
+        <table class="m-0 p-0 table-auto table table-xs"></table>
+      </div>
+    );
 
-    const table = document.createElement("table");
-    table.style.margin = "0px";
-
-    tooltipEl.appendChild(table);
     chart.canvas.parentNode.appendChild(tooltipEl);
   }
 
@@ -400,7 +407,6 @@ const getOrCreateTooltip = (chart) => {
 const externalTooltipHandler = (context) => {
   // Tooltip Element
   const { chart, tooltip } = context;
-  console.log("tooltip", tooltip);
   const tooltipEl = getOrCreateTooltip(chart);
 
   // Hide if no tooltip
@@ -412,48 +418,60 @@ const externalTooltipHandler = (context) => {
   // Set Text
   if (tooltip.body) {
     const titleLines = tooltip.title || [];
-    const bodyLines = tooltip.body.map((b) => b.lines);
+
+    // Create new array that zips together datapoints and label colors
+    let datapoints = tooltip.dataPoints.map((datapoint, i) => {
+      return {
+        datapoint: datapoint,
+        color: tooltip.labelColors[i],
+      };
+    });
+
+    // Sort from largest to smallest, keeping the first element first.
+    let sortedDataPoints = datapoints.slice(1, undefined).sort((a, b) => {
+      return b.datapoint.raw[1] - a.datapoint.raw[1];
+    });
+    sortedDataPoints.unshift(datapoints[0]);
 
     const tableHead = document.createElement("thead");
 
     titleLines.forEach((title) => {
-      const tr = document.createElement("tr");
-      tr.style.borderWidth = 0;
-
-      const th = document.createElement("th");
-      th.style.borderWidth = 0;
-      const text = document.createTextNode(title);
-
-      th.appendChild(text);
-      tr.appendChild(th);
-      tableHead.appendChild(tr);
+      tableHead.appendChild(
+        <tr class="border-0">
+          <th></th>
+          <th>Total</th>
+          <th>{title}</th>
+        </tr>
+      );
     });
 
     const tableBody = document.createElement("tbody");
-    bodyLines.forEach((body, i) => {
-      const colors = tooltip.labelColors[i];
+    sortedDataPoints.forEach((zipped, i) => {
+      let datapoint = zipped.datapoint;
+      let colors = zipped.color;
 
-      const span = document.createElement("span");
-      span.style.background = colors.backgroundColor;
-      span.style.borderColor = colors.borderColor;
-      span.style.borderWidth = "2px";
-      span.style.marginRight = "10px";
-      span.style.height = "10px";
-      span.style.width = "10px";
-      span.style.display = "inline-block";
+      let backgroundColor = color(colors.backgroundColor).alpha(1).rgbString();
+      let borderColor = color(colors.borderColor).alpha(1).rgbString();
 
-      const tr = document.createElement("tr");
-      tr.style.backgroundColor = "inherit";
-      tr.style.borderWidth = 0;
+      const tr = (
+        <tr
+          class="border-0 text-sm"
+          style={{ fontWeight: i == 0 ? "bold" : "normal" }}
+        >
+          <td class="border-0">
+            <span
+              class="inline-block flex-shrink-0 h-3 w-3 mr-1"
+              style={{
+                background: backgroundColor,
+                borderColor: borderColor,
+              }}
+            />
+          </td>
+          <td>{datapoint.formattedValue}</td>
+          <td>{datapoint.dataset.label}</td>
+        </tr>
+      );
 
-      const td = document.createElement("td");
-      td.style.borderWidth = 0;
-
-      const text = document.createTextNode(body);
-
-      td.appendChild(span);
-      td.appendChild(text);
-      tr.appendChild(td);
       tableBody.appendChild(tr);
     });
 
@@ -473,7 +491,25 @@ const externalTooltipHandler = (context) => {
 
   // Display, position, and set styles for font
   tooltipEl.style.opacity = 1;
-  tooltipEl.style.left = positionX + tooltip.caretX + "px";
+
+  const tooltipWidth = tooltipEl.offsetWidth; // Get actual width after styles are applied
+  const windowWidth = window.innerWidth;
+
+  let tooltipX = positionX + tooltip.caretX;
+
+  // Check if the tooltip will go off the right edge, with some margin
+  const marginRight = 10; // Adjust as needed
+  if (tooltipX + tooltipWidth + marginRight > windowWidth) {
+    tooltipX = windowWidth - tooltipWidth - marginRight;
+  }
+
+  // Check if the tooltip will go off the left edge
+  const marginLeft = 10; // Adjust as needed
+  if (tooltipX < marginLeft) {
+    tooltipX = marginLeft;
+  }
+
+  tooltipEl.style.left = `${tooltipX}px`;
   tooltipEl.style.top = positionY + tooltip.caretY + "px";
   tooltipEl.style.font = tooltip.options.bodyFont.string;
   tooltipEl.style.padding =
