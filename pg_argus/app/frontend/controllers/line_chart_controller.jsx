@@ -150,6 +150,13 @@ export default class extends Controller {
         // Create the echarts instance
         let ctx = this.graphTarget;
 
+        let xmin = undefined;
+        let xmax = undefined;
+        if (data.labels.length !== 0) {
+          xmin = data.labels[0];
+          xmax = data.labels[data.labels.length - 1];
+        }
+
         this.chart = new Chart(ctx, {
           type: "line",
           data: {
@@ -177,6 +184,8 @@ export default class extends Controller {
                 time: {
                   ticks: "labels",
                 },
+                suggestedMin: xmin,
+                suggestedMax: xmax,
               },
             },
             plugins: {
@@ -257,7 +266,7 @@ export default class extends Controller {
 
     if (!listContainer) {
       listContainer = (
-        <table class="m-0 p-0 table-fixed table table-xs table-pin-rows table-pin-cols"></table>
+        <table class="m-0 p-0 table-auto table table-xs table-pin-rows table-pin-cols"></table>
       );
       this.legendTarget.appendChild(listContainer);
     }
@@ -283,8 +292,8 @@ export default class extends Controller {
         ul.appendChild(
           <thead style={{ display: "table-header-group", position: "sticky" }}>
             <tr>
-              <th class="w-6"></th>
-              <th class="w-16">Total</th>
+              <th></th>
+              <th>Total</th>
               <th>Label</th>
             </tr>
           </thead>
@@ -330,7 +339,7 @@ export default class extends Controller {
                   }}
                 />
               </td>
-              <td>{totals[item.text]}</td>
+              <td>{Math.round(totals[item.text] * 100) / 100}</td>
               <td
                 id={itemId}
                 class="m-0 p-0"

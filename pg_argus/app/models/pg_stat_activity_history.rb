@@ -39,7 +39,7 @@ class PgStatActivityHistory < ClickhouseRecord
       ORDER BY #{group_by_str} ASC LIMIT 1000
     SQL
     result = self.connection.execute(query)
-    self.format_timeseries_data(result, group_by: group_by)
+    self.format_timeseries_data(result, start_ts, end_ts, group_by: group_by)
   end
 
   def self.query_timeseries(start_ts, end_ts, group_by: [], aggs: [], filters: [])
@@ -53,7 +53,7 @@ class PgStatActivityHistory < ClickhouseRecord
       ORDER BY time ASC LIMIT 1000
     SQL
     result = self.connection.execute(query)
-    self.format_timeseries_data(result, group_by: group_by)
+    self.format_timeseries_data(result, start_ts, end_ts, group_by: group_by)
   end
 
   def self.subquery(start_ts, end_ts, group_by: [], filters: [])
@@ -94,9 +94,12 @@ class PgStatActivityHistory < ClickhouseRecord
   #    ...
   #  ]
   # }
-  def self.format_timeseries_data(results, group_by: [])
+  def self.format_timeseries_data(results, start_ts, end_ts, group_by: [])
     # extract the x-axis labels
     labels = results["data"].map { |r| r[0].to_i }.uniq.sort
+    # if start and end are not in labels push them into it front and back respectively
+    labels = labels.unshift(start_ts) unless labels.include?(start_ts)
+    labels = labels.push(end_ts) unless labels.include?(end_ts)
     # group the data by the group_by column
     grouped = results["data"].group_by { |r| r[1..group_by.size] }
     # extract just 0 and 1 from each row that has now been grouped
