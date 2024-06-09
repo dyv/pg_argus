@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
 
+  defaults format: :json do
+    get '/queries/:id', to: 'queries#show', :id => /.*/
+  end
   # Defines the root path route ("/")
   root "dashboard#index"
 end

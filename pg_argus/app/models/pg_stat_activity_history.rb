@@ -1,5 +1,141 @@
 class PgStatActivityHistory < ClickhouseRecord
   self.table_name = "pg_stat_activity_history"
+
+  def self.aggregations(aggs)
+    quantiles = []
+    agg_strs = []
+    for agg in aggs
+      case agg
+      when "avg"
+        agg_strs << "avg(count) as _avg"
+      when "sum"
+        agg_strs << "sum(count) as _sum"
+      when "max"
+        agg_strs << "max(count) as _max"
+      when "min"
+        agg_strs << "min(count) as _min"
+      when "p50"
+        quantiles << 0.5
+      when "p95"
+        quantiles << 0.5
+      when "p99"
+        quantiles << 0.5
+      end
+    end
+    aggs_str = ""
+    quantiles_str = ""
+    aggs_str = ", #{agg_strs.join(", ")}" if agg_strs.length > 0
+    quantiles_str = ", quantiles(#{quantiles.join(", ")})(count) as _quantiles" if quantiles.length > 0
+    return aggs_str + quantiles_str
+  end
+
+  def self.query_total(start_ts, end_ts, group_by: [], aggs: [], filters: [])
+    group_by_str = group_by.map { |g| "#{g}" }.join(", ")
+    sub = subquery(start_ts, end_ts, group_by: group_by, filters: filters)
+    query = <<-SQL
+      SELECT #{group_by_str}, #{self.aggregations(aggs)}
+      FROM (#{sub})
+      GROUP BY #{group_by_str}
+      ORDER BY #{group_by_str} ASC LIMIT 1000
+    SQL
+    result = self.connection.execute(query)
+    self.format_timeseries_data(result, group_by: group_by)
+  end
+
+  def self.query_timeseries(start_ts, end_ts, group_by: [], aggs: [], filters: [])
+    group_by_str = group_by.map { |g| "#{g}" }.join(", ")
+    group_by_comma = group_by_str.size == 0 ? "" : ", "
+    sub = subquery(start_ts, end_ts, group_by: group_by, filters: filters)
+    query = <<-SQL
+      SELECT toUnixTimestamp(toStartOfInterval(timestamp, INTERVAL 15 SECONDS)) * 1000 as time #{group_by_comma}#{group_by_str} #{self.aggregations(aggs)}
+      FROM (#{sub})
+      GROUP BY ALL
+      ORDER BY time ASC LIMIT 1000
+    SQL
+    result = self.connection.execute(query)
+    self.format_timeseries_data(result, group_by: group_by)
+  end
+
+  def self.subquery(start_ts, end_ts, group_by: [], filters: [])
+    group_by_str = group_by.map { |g| "#{g}" }.join(", ")
+    group_by_comma = group_by_str.size == 0 ? "" : ", "
+    filters_str = ""
+    filters_str = ("AND " + filters.map { |f| "#{f}" }.join(" AND ")) if filters.length > 0
+    query = <<-SQL
+      SELECT timestamp #{group_by_comma} #{group_by_str}, count(*) as count
+      FROM pg_stat_activity_history
+      WHERE ( timestamp >= '#{start_ts/1000}' AND timestamp <= '#{end_ts/1000}' #{filters_str})
+      GROUP BY timestamp #{group_by_comma} #{group_by_str}
+    SQL
+    return query
+  end
+
+
+  # Expected input format:
+  # {
+  #  "data": [
+  #    [timestamp, query, value],
+  #    [timestamp, query, value],
+  #    ...
+  #  ]
+  # }
+  # Expected output format:
+  # {
+  #  "labels": [timestamp, timestamp, ...],
+  #  "results": [
+  #    {
+  #      "label": query,
+  #      "data": [
+  #        [timestamp, value],
+  #        [timestamp, value],
+  #        ...
+  #      ]
+  #    },
+  #    ...
+  #  ]
+  # }
+  def self.format_timeseries_data(results, group_by: [])
+    # extract the x-axis labels
+    labels = results["data"].map { |r| r[0].to_i }.uniq.sort
+    # group the data by the group_by column
+    grouped = results["data"].group_by { |r| r[1..group_by.size] }
+    # extract just 0 and 1 from each row that has now been grouped
+    results = grouped.map do |query, rows|
+      {
+        label: query,
+        data: rows.map { |r| [r[0].to_i, r[-1].to_f] },
+      }
+    end
+    # for each series fill with nulls for labels that do not have values
+    # do this efficiently since each series is sorted by timestamp
+    results.each do |series|
+      series[:data] = self.compress_nils(labels, series[:data])
+    end
+    return {
+      labels: labels,
+      results: results,
+    }
+  end
+
+  def self.compress_nils(labels, series)
+    last_was_nil = true
+    output = []
+    labels.each do |label|
+      point = series.first
+      if point && point[0] == label
+        series.shift
+        last_was_nil = false
+        output << point
+      else
+        if !last_was_nil
+          last_was_nil = true
+          output << [label, nil]
+        end
+      end
+    end
+    return output
+  end
+
   # bulk_load loads data from postgres: pg_stat_activity, pg_locks, pg_class
   # and inserts it into Clickhouse in one insert_all statement.
   def self.bulk_load!(timestamp, pgconn)

@@ -39,7 +39,7 @@ Interaction.modes.xAxisNearest = function (
 // Connects to data-controller="line-chart"
 export default class extends Controller {
   static targets = ["graph", "legend"];
-  static values = { url: String, allVisible: Boolean };
+  static values = { url: String, allVisible: Boolean, groupBy: String };
 
   connect() {
     this.load();
@@ -56,10 +56,9 @@ export default class extends Controller {
 
   startRefreshing() {
     this.interval = setInterval(() => {
-      fetch(this.urlValue)
+      fetch(this.getUrlValue())
         .then((response) => response.json())
         .then((data) => {
-          data = JSON.parse(mockData);
           this.prepareDatasets(data);
 
           this.chart.data.labels = data.labels;
@@ -108,18 +107,45 @@ export default class extends Controller {
   lineWidth = 1;
   pointSize = 2;
 
+  getUrlValue() {
+    // get "from" and "until" from the window query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const from = urlParams.get("from");
+    const until = urlParams.get("until");
+    const ago = urlParams.get("ago");
+
+    let groupByArray = this.groupByValue.split(",");
+    if (this.groupByValue.length === 0) {
+      groupByArray = [];
+    }
+
+    let url = new URL(this.urlValue, window.location.origin);
+    if (from && until) {
+      url.searchParams.append("from", from);
+      url.searchParams.append("until", until);
+    }
+    if (ago) {
+      url.searchParams.append("ago", ago);
+    }
+
+    for (let i = 0; i < groupByArray.length; i++) {
+      let groupBy = groupByArray[i];
+      url.searchParams.append("group_by[]", groupBy);
+    }
+    return url;
+  }
+
   load() {
     console.log(
       "Loading chart",
       this.graphTarget.id,
       this.urlValue,
-      this.groupValue
+      this.groupByValue
     );
 
-    fetch(this.urlValue)
+    fetch(this.getUrlValue())
       .then((response) => response.json())
       .then((data) => {
-        data = JSON.parse(mockData);
         this.prepareDatasets(data);
         // Create the echarts instance
         let ctx = this.graphTarget;
